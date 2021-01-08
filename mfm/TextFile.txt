@@ -1,0 +1,199 @@
+﻿
+
+
+    <asp:LinkButton ID="lbt_saldo" runat="server" OnClientClick="ShowProcessMessage('ProcessingWindow')"></asp:LinkButton> 
+
+
+
+
+
+
+            Dim n_cartao As String = lista.myTable.Rows(0)(0).ToString
+            Dim montante_saldo_do_cartao As Double = lista.myTable.Rows(0)(1)
+            Dim usado As Boolean = lista.myTable.Rows(0)(2)
+            If usado Then
+                txt_n_cartao.Focus()
+                lbl_status.Text = utilitarios.report_error("O nº do cartão já foi usado")
+                Exit Sub
+            Else
+
+
+                montante_saldo_a_carregar = montante_saldo_do_cartao
+                id_conta_a_carregar_saldo = Session("UserId")
+                'carregar saldo
+
+
+                Dim saldo_usuario As Double = utilitarios.get_saldo_cantor_publicidade(Session("cnnString_public"), Session("UserId"))
+                saldo_actual = saldo_usuario + montante_saldo_do_cartao
+                sql = "update cantor set " _
+                & " saldo_publicidade='" & saldo_actual & "'" _
+                & " where id='" & Session("UserId") & "'"
+                VDUtils.myADO.updateRecords(Session("cnnString_public"), sql, True)
+
+                'update historico do cator
+                'Dim id_historico As String = ""
+                Dim id_historico As String = VDUtils.diversos.GetUniqueRandomStringId(Session("cnnString_public"), "QWERTYUIPASDFGHJKLZXCVBNM123456789", "historico_saldo_cantor", "id", 12)
+                Dim id_cantor As String = Session("UserId")
+                Dim id_saldo As String = Trim(txt_n_cartao.Text)
+                Dim montante As Double = montante_saldo_do_cartao
+
+                sql = "INSERT INTO historico_saldo_cantor (" _
+                    & "   id,  " _
+                    & "   id_cantor,  " _
+                    & "   id_saldo,  " _
+                    & "   id_carregado_por,  " _
+                    & "   data_carregamento,  " _
+                    & "   montante) VALUES (" _
+            & "'" & id_historico & "', " _
+            & "'" & id_cantor & "', " _
+            & "'" & id_saldo & "', " _
+            & "'" & id_cantor & "', " _
+            & "'" & my_date & "', " _
+            & "'" & montante & "')"
+                VDUtils.myADO.updateRecords(Session("cnnString_public"), sql, True)
+
+                'id_carregado_por
+
+                sql = "update tb_cartoes_saldo set " _
+                & " usado=True" _
+                & " where id='" & Trim(txt_n_cartao.Text) & "'"
+                VDUtils.myADO.updateRecords(Session("cnnString_public"), sql, True)
+
+                RadioButtonList_prompt.ClearSelection()
+
+                'lbl_saldo.Text = "<div style=""background-color:white; color:Black"">Saldo carregado com exito</div>"
+                'lbl_saldo.Text = lbl_saldo.Text & "<div style=""background-color:white; color:Black"">Saldo carregado=" & montante.ToString("N") & " AKZ</div>"
+
+
+
+
+                lbl_status.Text = "<div style=""background-color:white; color:Black"">Saldo carregado com exito</div>"
+                lbl_status.Text = lbl_status.Text & "<div style=""background-color:white; color:Black"">" & montante.ToString("N") & " AKZ</div>"
+                Dim preco_diario As Double = utilitarios.get_preco_diario_publicidade(Session("cnnString_public"))
+                Dim n_dias As Integer = montante / preco_diario
+                lbl_status.Text = lbl_status.Text & "<div style=""background-color:White; text-align:left; font-size:13px; color:Blue""><b>Equivalente a " & n_dias.ToString & " DIAS</b>" & blanks & "</div>"
+
+                lbl_status.Text = lbl_status.Text & "<br /><div style=""background-color:white; color:Black"">Saldo actual=" & saldo_actual.ToString("N") & " AKZ</div>"
+
+                n_dias = saldo_actual / preco_diario
+
+                lbl_status.Text = lbl_status.Text & "<div style=""background-color:White; text-align:left; font-size:13px; color:Blue""><b>Equivalente a " & n_dias.ToString & " DIAS</b>" & blanks & "</div>"
+
+
+            End If
+
+
+        Else
+            ' verificar a conta do usuario
+            If txt_n_telefone.Text = "" Then
+                lbl_status.Text = utilitarios.report_error("Introduza a conta do usuario")
+                txt_n_telefone.Focus()
+                Exit Sub
+            End If
+
+            ' verificar se o usuario existe
+            sql = "select cantor.id from cantor where cantor.id ='" & Trim(txt_n_telefone.Text) & "'"
+            Dim lista_usuario As VDUtils.simpleList = New VDUtils.simpleList(Session("cnnString_public"), sql)
+            If lista_usuario.myTable.Rows.Count = 0 Then
+                txt_n_telefone.Focus()
+                lbl_status.Text = utilitarios.report_error("Conta do usuario inválida")
+                Exit Sub
+            End If
+
+
+            ' verificar se o numero do cartao existe
+            If txt_n_cartao.Text = "" Then
+                lbl_status.Text = utilitarios.report_error("Introduza o nº do cartão")
+                txt_n_cartao.Focus()
+                Exit Sub
+            End If
+
+            ' agora validar se o numero do cartao existe
+            sql = "select id, montante, usado from tb_cartoes_saldo where id ='" & Trim(txt_n_cartao.Text) & "'"
+            Dim lista As VDUtils.simpleList = New VDUtils.simpleList(Session("cnnString_public"), sql)
+            If lista.myTable.Rows.Count = 0 Then
+                txt_n_cartao.Focus()
+                lbl_status.Text = utilitarios.report_error("O nº do cartão inválido")
+                Exit Sub
+            End If
+
+
+
+            Dim n_cartao As String = lista.myTable.Rows(0)(0).ToString
+            Dim montante_saldo_do_cartao As Double = lista.myTable.Rows(0)(1)
+            Dim usado As Boolean = lista.myTable.Rows(0)(2)
+            If usado Then
+                txt_n_cartao.Focus()
+                lbl_status.Text = utilitarios.report_error("O nº do cartão já foi usado")
+                Exit Sub
+            Else
+
+
+                montante_saldo_a_carregar = montante_saldo_do_cartao
+                id_conta_a_carregar_saldo = txt_n_telefone.Text
+
+                'carregar saldo
+                txt_n_telefone.Text = Trim(txt_n_telefone.Text)
+                Dim saldo_usuario As Double = utilitarios.get_saldo_cantor_publicidade(Session("cnnString_public"), Session("UserId"))
+                saldo_actual = saldo_usuario + montante_saldo_do_cartao
+
+                sql = "update cantor set " _
+                & " saldo_publicidade='" & saldo_actual & "'" _
+                & " where id='" & txt_n_telefone.Text & "'"
+                VDUtils.myADO.updateRecords(Session("cnnString_public"), sql, True)
+
+
+
+
+                'update historico do fan
+                'Dim id_historico As String = ""
+                Dim id_historico As String = VDUtils.diversos.GetUniqueRandomStringId(Session("cnnString_public"), "QWERTYUIPASDFGHJKLZXCVBNM123456789", "historico_saldo_cantor", "id", 12)
+                Dim id_cantor As String = txt_n_telefone.Text
+                Dim id_saldo As String = Trim(txt_n_cartao.Text)
+                Dim montante As Double = montante_saldo_do_cartao
+                sql = "INSERT INTO historico_saldo_cantor (" _
+                    & "   id,  " _
+                    & "   id_cantor,  " _
+                    & "   id_saldo,  " _
+                    & "   id_carregado_por,  " _
+                    & "   data_carregamento,  " _
+                    & "   montante) VALUES (" _
+            & "'" & id_historico & "', " _
+            & "'" & txt_n_telefone.Text & "', " _
+            & "'" & id_saldo & "', " _
+            & "'" & Session("UserId") & "', " _
+            & "'" & my_date & "', " _
+            & "'" & montante & "')"
+                VDUtils.myADO.updateRecords(Session("cnnString_public"), sql, True)
+
+
+
+                sql = "update tb_cartoes_saldo set " _
+                & " usado=True" _
+                & " where id='" & Trim(txt_n_cartao.Text) & "'"
+                VDUtils.myADO.updateRecords(Session("cnnString_public"), sql, True)
+
+                RadioButtonList_prompt.ClearSelection()
+                lbl_status.Text = "<div style=""background-color:white; color:Black"">Saldo carregado com exito</div>"
+                lbl_status.Text = lbl_status.Text & "<div style=""background-color:white; color:Black"">Nº da conta:" & id_cantor & "</div>"
+                lbl_status.Text = lbl_status.Text & "<div style=""background-color:white; color:Black"">Saldo Carregado=" & montante_saldo_do_cartao.ToString("N") & " AKZ</div>"
+
+            End If
+
+        End If
+
+
+        utilitarios.insert_entrada_tesouraria(Session("cnnString_public"),
+                                             Now(),
+                                             id_conta_a_carregar_saldo,
+                                            "ref " & Trim(txt_n_cartao.Text),
+                                             "Carregar Saldo Publicidade",
+                                             montante_saldo_a_carregar)
+
+
+
+
+        'If park_selected_option = "Carregar saldo" Then
+        '    consultar_meu_saldo()
+
+        'End If

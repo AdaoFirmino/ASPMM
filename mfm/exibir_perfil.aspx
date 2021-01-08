@@ -1,0 +1,1 @@
+Este é um ficheiro de marcador gerado pela ferramenta de pré-compilação e não deve ser eliminado!
